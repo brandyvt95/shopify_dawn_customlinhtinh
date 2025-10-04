@@ -68,33 +68,7 @@
 
 
 
-           <!-- ✅ Preschool input -->
-           {{product.metafields.custom.gender_otp  }}
-  {% if product.metafields.custom.preschool_opt == true %}
-    <div class="custom-field">
-      <label for="preschool_input">Nhập thông tin cho Preschool:</label>
-      <input 
-        type="text" 
-        id="preschool_input" 
-        name="properties[Preschool Info]" 
-        placeholder="Ví dụ: Tên bé, Lớp học..." 
-      >
-    </div>
-  {% endif %}
-
-  <!-- ✅ Gender input -->
-  {% if product.metafields.custom.gender_otp == true %}
-    <div class="custom-field">
-      <label for="gender_input">Nhập thông tin cho Gender:</label>
-      <input 
-        type="text" 
-        id="gender_input" 
-        name="properties[Gender Info]" 
-        placeholder="Ví dụ: Nam/Nữ/Unisex..." 
-      >
-    </div>
-  {% endif %}
-
+     {% render 'custom-product-inputs', product: product %}
 
 
 
