@@ -1,0 +1,290 @@
+{% comment %}
+  use case
+  {% render 'custom-product-inputs', product: product %}
+{% endcomment %}
+{% comment %} const dataMapping = {
+    style: {
+        name:"Style",
+        option:[
+            {
+                name:"Top",
+                id:"cs_style_top"
+            },
+            {
+                type:"Uniform",
+                id:"cs_style_uniform"
+            }
+        ]
+    },
+    sleeve:{
+        name:"Sleeve",
+        option:[
+            {
+                name:"Short Sleeve",
+                id:"cs_style_short_sleeve"
+            },
+            {
+                type:"Long Sleeve",
+                id:"cs_style_long_sleeve"
+            }
+        ]
+    },
+    gender:{
+        name:"Gender",
+        option:[
+            {
+                name:"Men's",
+                size:["XL,XLL,XS,M,L"],
+                id:"cs_gender_men"
+            }, 
+            {
+                name:"Women's",
+                size:["XS,M,L"],
+                id:"cs_gender_women"
+            },
+            {
+                name:"Youth's",
+                size:[XL,XLL,M,N]
+                id:"cs_gender_youth"
+            }
+        ]
+    },
+    material:{
+        name:"Material",
+        option:[
+            {
+                name:"Print",
+                id:"cs_material_print"
+            },
+            {
+                name:"Stitched(Embroidered)",
+                id:"cs_material_stitched"
+            },
+            {
+                name:"Blank(No Name/Number)",
+                id:"cs_material_blank"
+            }
+        ]
+    },
+    inside_lining :{
+        name:"Inside Lining",
+        option:[
+            {
+                name:"Lightweight",
+                id:"cs_inside_lining_lightweight"
+            },
+            {
+                name:"Quilted",
+                id:"cs_inside_lining_quilted"
+            }
+        ]
+    }
+    text_material:{
+        lists:["Front - Team Name","Front - Number(Shorts Number)","Back - Your Name","Back - Number"],
+
+    },
+    logo_material:{
+        opt1:{
+            name:"1ST Logo Location(Optional)",
+            note:"If the option isn't available below, please leave a note in the order specifying the required location.",
+            lists:["Right Sleeve","Left Chest","Right Chest","Back Neck","Shorts"]
+        },
+        opt1:{
+            name:"2ND Logo Location(Optional)",
+            note:"If the option isn't available below, please leave a note in the order specifying the required location.",
+            lists:["Left Sleeve","Right Sleeve","Left Chest","Right Chest","Back Neck","Shorts"]
+        },
+        id:"cs_logo_material"
+       
+    },
+    note:{
+        id:"cs_note"
+    }
+} {% endcomment %}
+
+{% assign dfg_metaobject = product.metafields.custom.info_expand.value %}
+{% if dfg_metaobject %}
+  {{ dfg_metaobject | json }}
+{% endif %}
+
+
+<style>
+  button {
+    user-select:none
+  }
+  .option-buttons { display: flex; flex-wrap: wrap; gap: 5px; margin: 5px 0; }
+  .option-button {
+    padding: 6px 12px;
+    border: 1px solid #333;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .option-button.selected {
+    background: #000;
+    color: #fff;
+  }
+  .custom-field { margin-bottom: 15px; }
+  .note { font-size: 12px; color: #666; margin-bottom: 5px; }
+  .image-input { margin-top: 5px; display:block; }
+  .size-options {  }
+  .selected-value { margin-left: 8px; font-weight: normal; color: #000}
+</style>
+
+<script>
+  document.addEventListener("click", function(e) {
+    if (e.target.classList.contains("option-button")) {
+      const group = e.target.getAttribute("data-group");
+      const value = e.target.getAttribute("data-value");
+
+      // Nếu group là Logo Opt1 hoặc Opt2 thì cho phép multi-select
+      if (group === "Logo Opt1" || group === "Logo Opt2") {
+        if (value === "None") {
+          // Clear all selections
+          document.querySelectorAll('.option-button[data-group="'+group+'"]').forEach(btn=>{
+            btn.classList.remove("selected");
+          });
+          e.target.classList.add("selected");
+          document.querySelector('input[name="properties['+group+']"]').value = "None";
+        } else {
+          // Toggle selection
+          if (e.target.classList.contains("selected")) {
+            e.target.classList.remove("selected");
+          } else {
+            e.target.classList.add("selected");
+          }
+          // Cập nhật hidden input (join nhiều giá trị)
+          let selectedVals = [];
+          document.querySelectorAll('.option-button[data-group="'+group+'"].selected').forEach(btn=>{
+            if (btn.getAttribute("data-value") !== "None") {
+              selectedVals.push(btn.getAttribute("data-value"));
+            }
+          });
+          document.querySelector('input[name="properties['+group+']"]').value = selectedVals.join(", ");
+          // Bỏ "None" nếu đang chọn các option khác
+          document.querySelectorAll('.option-button[data-group="'+group+'"]').forEach(btn=>{
+            if (btn.getAttribute("data-value") === "None") btn.classList.remove("selected");
+          });
+        }
+      } else {
+        // Với các group khác: single select
+        document.querySelectorAll('.option-button[data-group="'+group+'"]').forEach(btn=>{
+          btn.classList.remove("selected");
+        });
+        e.target.classList.add("selected");
+
+        // Update hidden input
+        const hidden = document.querySelector('input[name="properties['+group+']"]');
+        if (hidden) hidden.value = value;
+
+        // Hiển thị selected text bên cạnh label
+        const label = document.querySelector('.field-label[data-group="'+group+'"] .selected-value');
+        if (label) label.textContent = value;
+
+        // Nếu là Gender thì load lại size dropdown
+        if (group === "Gender") {
+          const sizeDropdown = document.getElementById("gender_size");
+          sizeDropdown.innerHTML = '<option value="">-- Select Size --</option>';
+          const sizes = e.target.getAttribute("data-sizes").split(",");
+          sizes.forEach(size=>{
+            let opt = document.createElement("option");
+            opt.value = size.trim();
+            opt.textContent = size.trim();
+            sizeDropdown.appendChild(opt);
+          });
+        }
+      }
+    }
+  });
+</script>
+
+<!-- Style -->
+<div class="custom-field">
+  <p class="field-label" data-group="Style"><strong>Style: </strong><span class="selected-value"></span></p>
+  <div class="option-buttons">
+    <button type="button" class="option-button" data-group="Style" data-value="Top">Top</button>
+    <button type="button" class="option-button" data-group="Style" data-value="Uniform">Uniform</button>
+  </div>
+  <input type="hidden" name="properties[Style]">
+</div>
+
+<!-- Sleeve -->
+<div class="custom-field">
+  <p class="field-label" data-group="Sleeve"><strong>Sleeve: </strong><span class="selected-value"></span></p>
+  <div class="option-buttons">
+    <button type="button" class="option-button" data-group="Sleeve" data-value="Short Sleeve">Short Sleeve</button>
+    <button type="button" class="option-button" data-group="Sleeve" data-value="Long Sleeve">Long Sleeve</button>
+  </div>
+  <input type="hidden" name="properties[Sleeve]">
+</div>
+
+<!-- Gender -->
+<div class="custom-field">
+  <p class="field-label" data-group="Gender"><strong>Gender: </strong><span class="selected-value"></span></p>
+  <div class="option-buttons">
+    <button type="button" class="option-button" data-group="Gender" data-value="Men's" data-sizes="XS,S,M,L,XL,XXL">Men's</button>
+    <button type="button" class="option-button" data-group="Gender" data-value="Women's" data-sizes="A,B,C">Women's</button>
+    <button type="button" class="option-button" data-group="Gender" data-value="Youth's" data-sizes="11,22,33">Youth's</button>
+        <button type="button" class="option-button" data-group="Gender" data-value="PreSchool" data-sizes="??klse">PreSchool</button>
+  </div>
+  <input type="hidden" name="properties[Gender]">
+
+  <!-- Size dropdown -->
+  <div class="size-options" style="margin-top:10px;">
+    <label for="gender_size"><strong>Size</strong></label><br>
+    <select id="gender_size" name="properties[Gender Size]" style="padding:5px; border:1px solid #333;">
+      <option value="">-- Select Size --</option>
+    </select>
+  </div>
+</div>
+
+<!-- Material -->
+<div class="custom-field">
+  <p class="field-label" data-group="Material"><strong>Material: </strong><span class="selected-value"></span></p>
+  <div class="option-buttons">
+    <button type="button" class="option-button" data-group="Material" data-value="Print">Print</button>
+    <button type="button" class="option-button" data-group="Material" data-value="Stitched(Embroidered)">Stitched</button>
+    <button type="button" class="option-button" data-group="Material" data-value="Blank(No Name/Number)">Blank</button>
+  </div>
+  <input type="hidden" name="properties[Material]">
+</div>
+
+<!-- Inside Lining -->
+<div class="custom-field">
+  <p class="field-label" data-group="Inside Lining"><strong>Inside Lining: </strong><span class="selected-value"></span></p>
+  <div class="option-buttons">
+    <button type="button" class="option-button" data-group="Inside Lining" data-value="Lightweight">Lightweight</button>
+    <button type="button" class="option-button" data-group="Inside Lining" data-value="Quilted">Quilted</button>
+  </div>
+  <input type="hidden" name="properties[Inside Lining]">
+</div>
+
+<!-- Logo Material Opt1 -->
+{% assign logo_opt1 = "Right Sleeve,Left Chest,Right Chest,Back Neck,Shorts" | split: "," %}
+<div class="custom-field">
+  <p><strong>1ST Logo Location (Optional)</strong></p>
+  <p class="note">If the option isn't available, leave a note in order.</p>
+  <div class="option-buttons">
+    {% for loc in logo_opt1 %}
+      <button type="button" class="option-button" data-group="Logo Opt1" data-value="{{ loc | strip }}">{{ loc | strip }}</button>
+    {% endfor %}
+    <button type="button" class="option-button" data-group="Logo Opt1" data-value="None">None</button>
+  </div>
+  <input type="hidden" name="properties[Logo Opt1]">
+  <input type="file" name="properties[Logo Opt1 Image]" class="image-input" accept="image/*">
+</div>
+
+<!-- Logo Material Opt2 -->
+{% assign logo_opt2 = "Left Sleeve,Right Sleeve,Left Chest,Right Chest,Back Neck,Shorts" | split: "," %}
+<div class="custom-field">
+  <p><strong>2ND Logo Location (Optional)</strong></p>
+  <p class="note">If the option isn't available, leave a note in order.</p>
+  <div class="option-buttons">
+    {% for loc in logo_opt2 %}
+      <button type="button" class="option-button" data-group="Logo Opt2" data-value="{{ loc | strip }}">{{ loc | strip }}</button>
+    {% endfor %}
+    <button type="button" class="option-button" data-group="Logo Opt2" data-value="None">None</button>
+  </div>
+  <input type="hidden" name="properties[Logo Opt2]">
+  <input type="file" name="properties[Logo Opt2 Image]" class="image-input" accept="image/*">
+</div>
