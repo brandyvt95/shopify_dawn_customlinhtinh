@@ -11,7 +11,7 @@
       <span class="cart__summary-item cart__original-total">
         <span class="cart__original-total-label">{{ 'content.cart_subtotal' | t }}</span>
         <span class="cart__original-total-value cart-secondary-typography">
-          {{- cart.original_total_price | money -}}
+          <span class="bcpo-cart-original-total">{{ cart.original_total_price | money }}</span>
         </span>
       </span>
       <div class="cart__summary-discounts">
@@ -137,3 +137,5 @@
     color: var(--color-foreground);
   }
 {% endstylesheet %}
+
+<!-- bcpo done -->
